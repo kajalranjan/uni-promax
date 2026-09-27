@@ -35,8 +35,7 @@ Either way works; the SQL Editor is the easiest the first time.
 
 **Option A — SQL Editor (no install):**
 1. Supabase dashboard → **SQL Editor** → **New query**.
-2. Run each file in `supabase/migrations/` **in filename order**, one query each:
-   `20260927000000_initial_schema.sql`, then `20260927010000_sdc_interests_and_tags.sql` → **Run**.
+2. Paste all of `supabase/migrations/20260927000000_initial_schema.sql` → **Run**.
 3. Check **Table Editor**: you should see `profiles`, `todos`, `interests` (27 rows), `event_tags` (54 rows), etc.
 
 **Option B — Supabase CLI:**
