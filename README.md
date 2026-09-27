@@ -124,6 +124,16 @@ Write the SQL, commit it, and run it (SQL Editor or `npx supabase db push`). Tel
 
 ---
 
+## Academics
+
+- **Screens:** `mobile/src/app/(app)/academics/`. First visit shows setup (Canvas feed link + class-schedule `.ics` upload + optional "about you"); after that, the main page with Calendar, Today, High priority and AI assistant bubbles.
+- **Backend:** `backend/app/routers/academics.py` (endpoints) and `backend/app/academics/` (`ics.py` reads calendars, `planner.py` places study sessions, `ai.py` talks to Gemini, `service.py` does the database work).
+- **How the plan works:** Gemini estimates how much work each assignment needs and how early to start; `planner.py` then fits study sessions around classes and commitments so nothing is crammed into the last day. Without a Gemini key, built-in estimates are used and the assistant is off.
+- **Setup:** run `supabase/migrations/20260927020000_academics_planning.sql` in the SQL Editor once, and add `GEMINI_API_KEY` to `backend/.env` (free key from https://aistudio.google.com/apikey).
+- **Tutorial screenshots:** save images in `mobile/assets/tutorials/` and add them to the steps in `help-canvas.tsx` / `help-schedule.tsx`.
+
+---
+
 ## Working together on GitHub
 
 - `main` should always run. Don't commit straight to it.
