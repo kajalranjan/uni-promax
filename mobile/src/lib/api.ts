@@ -18,13 +18,15 @@ async function request<T>(path: string, init: RequestInit, accessToken?: string)
     res = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        // JSON bodies need this header; for file uploads fetch sets its own.
+        ...(typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...init.headers,
       },
     });
-  } catch {
-    throw new ApiError(0, "Couldn't reach the server. Check your connection and try again.");
+  } catch (e) {
+    const reason = e instanceof Error && e.message ? ` (${e.message})` : '';
+    throw new ApiError(0, `Couldn't reach the server. Check your connection and try again.${reason}`);
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -40,5 +42,10 @@ export function apiGet<T>(path: string, accessToken?: string): Promise<T> {
 }
 
 export function apiPost<T>(path: string, data: unknown, accessToken?: string): Promise<T> {
-  return request<T>(path, { method: 'POST', body: JSON.stringify(data) }, accessToken);
+  return request<T>(path, { method: 'POST', body: JSON.stringify(data ?? {}) }, accessToken);
+}
+
+/** For file uploads (multipart/form-data). */
+export function apiPostForm<T>(path: string, form: FormData, accessToken?: string): Promise<T> {
+  return request<T>(path, { method: 'POST', body: form }, accessToken);
 }

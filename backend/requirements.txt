@@ -1,4 +1,7 @@
 fastapi[standard]>=0.141,<1
 pydantic-settings>=2.15,<3
 supabase>=2.31,<3
+icalendar>=7.3,<8
+recurring-ical-events>=3.8,<4
+google-genai>=2.25,<3
 pytest>=9,<10
