@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import health
+from app.routers import auth, health
 
 settings = get_settings()
 
@@ -17,4 +17,5 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
-# Feature routers (auth, academics, events, ai) get added here as they're built.
+app.include_router(auth.router)
+# Feature routers (academics, events, ai) get added here as they're built.
