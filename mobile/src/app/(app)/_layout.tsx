@@ -8,6 +8,7 @@ export default function AppLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="academics" options={{ title: 'Academics' }} />
       <Stack.Screen name="social" options={{ title: 'Social' }} />
+      <Stack.Screen name="event-preferences" options={{ title: 'Event preferences' }} />
     </Stack>
   );
 }
