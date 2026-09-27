@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     supabase_publishable_key: str = ""
     supabase_secret_key: str = ""
     cors_origins: str = "http://localhost:8081"
+    # Campus events: re-import the .ics feeds when data is older than this.
+    events_sync_minutes: int = 30
+    # Password for POST /events/sync (manual re-import). Empty = endpoint off.
+    events_sync_secret: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -1,9 +1,10 @@
 import { router, Stack } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { EventsOnboardingForm } from '@/components/events/EventsOnboardingForm';
+import { EventsToday } from '@/components/events/EventsToday';
 import { useAuth } from '@/lib/auth';
-import { colors, spacing } from '@/theme';
+import { colors } from '@/theme';
 
 // Social tab.
 // First visit (profile.events_onboarded_at is null) → onboarding form.
@@ -33,18 +34,11 @@ export default function Social() {
           ),
         }}
       />
-      {/* Placeholder: the "Events today" list is the next piece to build. */}
-      <View style={styles.container}>
-        <Text style={styles.heading}>Events today</Text>
-        <Text style={styles.text}>You're all set! Events matching your interests will show up here.</Text>
-      </View>
+      <EventsToday />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
-  heading: { fontSize: 28, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
-  text: { fontSize: 16, color: colors.muted, lineHeight: 22 },
   headerLink: { color: colors.primary, fontSize: 16, fontWeight: '600' },
 });

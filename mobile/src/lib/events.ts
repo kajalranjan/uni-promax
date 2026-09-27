@@ -2,6 +2,7 @@
 // Everything here talks to Supabase directly; Row Level Security makes sure a
 // student only reads and writes their own preferences.
 
+import { apiGet } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 
 export type Option = { id: number; name: string };
@@ -69,4 +70,58 @@ export async function saveEventPreferences(p: EventPreferences): Promise<void> {
     p_event_format: p.eventFormat,
   });
   if (error) throw new Error(error.message);
+}
+
+// ---------------------------------------------------------------------------
+// Events today (from our backend, which imports Sun Devil Central's .ics feed)
+
+export type CampusEvent = {
+  id: string;
+  title: string;
+  description: string | null;
+  starts_at: string; // ISO time
+  ends_at: string | null;
+  campus: string | null;
+  is_online: boolean;
+  is_hybrid: boolean;
+  event_url: string | null;
+  matched: string[]; // which of the student's interests / clubs it matched
+};
+
+export type EventsTodayResponse = { date: string; events: CampusEvent[]; onboarded: boolean };
+
+export function fetchEventsToday(accessToken: string): Promise<EventsTodayResponse> {
+  return apiGet<EventsTodayResponse>('/events/today', accessToken);
+}
+
+// ASU is in Arizona (no daylight saving: always UTC-7), so we format times
+// ourselves instead of relying on the phone's time zone.
+const AZ_OFFSET_MS = -7 * 60 * 60 * 1000;
+
+function azTime(iso: string): string {
+  const d = new Date(new Date(iso).getTime() + AZ_OFFSET_MS);
+  const h = d.getUTCHours();
+  const m = d.getUTCMinutes();
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+export function formatEventTime(e: Pick<CampusEvent, 'starts_at' | 'ends_at'>): string {
+  const start = new Date(e.starts_at).getTime();
+  const end = e.ends_at ? new Date(e.ends_at).getTime() : null;
+  if (end && end - start >= 23 * 60 * 60 * 1000) return 'All day';
+  return end ? `${azTime(e.starts_at)} – ${azTime(e.ends_at!)}` : azTime(e.starts_at);
+}
+
+export function formatToday(isoDate: string): string {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const weekday = days[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${weekday}, ${months[m - 1]} ${d}`;
+}
+
+export function eventPlace(e: Pick<CampusEvent, 'campus' | 'is_online' | 'is_hybrid'>): string | null {
+  if (e.is_online) return 'Online';
+  if (e.is_hybrid) return e.campus ? `${e.campus} + online` : 'In person + online';
+  return e.campus;
 }
