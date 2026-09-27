@@ -7,6 +7,7 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerTintColor: colors.primary, headerBackTitle: 'Back' }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="social" options={{ title: 'Social' }} />
+      <Stack.Screen name="event-preferences" options={{ title: 'Event preferences' }} />
 
       {/* Academics */}
       <Stack.Screen name="academics/index" options={{ title: 'Academics' }} />
