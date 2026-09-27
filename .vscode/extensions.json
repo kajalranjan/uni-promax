@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "expo.vscode-expo-tools",
+    "supabase.vscode-supabase-extension"
+  ]
+}

@@ -1,0 +1,20 @@
+# Dependencies / virtual envs
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets — each teammate keeps their own copy
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
+# Editors / OS
+.DS_Store
+.idea/
