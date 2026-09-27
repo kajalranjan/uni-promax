@@ -18,7 +18,7 @@ uni-promax/
 │   └── tests/
 └── supabase/
     ├── migrations/         database schema — every change is a new file here
-    ├── seed.sql            starter interest list
+    ├── seed.sql            optional test data (empty for now)
     └── config.toml
 ```
 
@@ -35,15 +35,15 @@ Either way works; the SQL Editor is the easiest the first time.
 
 **Option A — SQL Editor (no install):**
 1. Supabase dashboard → **SQL Editor** → **New query**.
-2. Paste all of `supabase/migrations/20260927000000_initial_schema.sql` → **Run**.
-3. New query → paste `supabase/seed.sql` → **Run**.
-4. Check **Table Editor**: you should see `profiles`, `todos`, `interests` (16 rows), etc.
+2. Run each file in `supabase/migrations/` **in filename order**, one query each:
+   `20260927000000_initial_schema.sql`, then `20260927010000_sdc_interests_and_tags.sql` → **Run**.
+3. Check **Table Editor**: you should see `profiles`, `todos`, `interests` (27 rows), `event_tags` (54 rows), etc.
 
 **Option B — Supabase CLI:**
 ```bash
 npx supabase login
 npx supabase link --project-ref YOUR-PROJECT-REF   # the ref is in your project URL
-npx supabase db push --include-seed
+npx supabase db push
 ```
 
 ### 3. Auth settings (dashboard → Authentication)
@@ -80,7 +80,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 fastapi dev app/main.py --host 0.0.0.0
 ```
-Open http://localhost:8000/health → `{"status":"ok"}`, and http://localhost:8000/health/db → `{"status":"ok","interests":16}`.
+Open http://localhost:8000/health → `{"status":"ok"}`, and http://localhost:8000/health/db → `{"status":"ok","interests":27}`.
 Interactive API docs: http://localhost:8000/docs. Tests: `pytest`.
 
 ### Run the mobile app
@@ -107,10 +107,11 @@ Always add mobile packages with `npx expo install <package>` (not `npm install`)
 | `todos` | auto to-dos from assignments + manual ones; `priority` 1 = high | app + backend |
 | `schedule_blocks` | AI "when to do what" study blocks + the student's other commitments | app + backend |
 | `ai_messages` | AI assistant chat history | backend |
-| `interests`, `user_interests` | interest list and each student's picks | app |
+| `interests`, `user_interests` | Sun Devil Central **Event Types** and each student's picks | app |
+| `event_tags`, `user_event_tags` | Sun Devil Central **Event Tags** (optional clubs/groups dropdown) and each student's picks. Tags with `is_selectable = false` (campus and in-person/online tags) are kept for matching but hidden from the dropdown | app |
 | `event_preferences` | preferred ASU campus, in-person / online / both | app |
 | `event_sources` | campus-event `.ics` feeds the backend imports | team (dashboard) |
-| `campus_events`, `campus_event_interests` | imported events + which interests they match | backend |
+| `campus_events`, `campus_event_interests`, `campus_event_tags` | imported events + which types and tags they match | backend |
 
 **Security:** Row Level Security is on for every table, so a student can only read or change their own rows even though the app talks to Supabase directly. The backend uses the secret key, which bypasses RLS, so backend code must always filter by the logged-in user's id.
 
