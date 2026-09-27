@@ -1,7 +1,8 @@
 -- =============================================================================
 -- Uni Promax — initial schema
 -- Tables for: student accounts, Academics (calendar, to-dos, AI schedule, AI chat)
--- and Events (interests, preferences, campus events).
+-- and Events (interests, clubs/tags, preferences, campus events).
+-- Interest and tag lists come from Sun Devil Central (Event Types / Event Tags).
 -- Passwords are NOT stored here: Supabase Auth (auth.users) handles them.
 -- =============================================================================
 
@@ -199,17 +200,121 @@ create index ai_messages_user_time on public.ai_messages (user_id, created_at);
 -- EVENTS
 -- ---------------------------------------------------------------------------
 
--- The interest list students pick from.
+-- The interest list students pick from (Sun Devil Central "Event Types").
 create table public.interests (
   id   smallint generated always as identity primary key,
   name text not null unique
 );
+
+insert into public.interests (name) values
+  ('Academic'),
+  ('Athletic/Sports'),
+  ('Career Workshop'),
+  ('Ceremony'),
+  ('Community Service'),
+  ('Corporate Presentation'),
+  ('Cultural'),
+  ('Dinner/Gala'),
+  ('Educational/Awareness'),
+  ('Fundraiser'),
+  ('Graduation'),
+  ('Job/Volunteer Opportunities'),
+  ('Leadership'),
+  ('Lecture'),
+  ('Luncheon'),
+  ('Meeting'),
+  ('Mock Interview'),
+  ('Office Hours'),
+  ('Online Webinar'),
+  ('Orientation'),
+  ('Social'),
+  ('Spiritual'),
+  ('Ticket Sales'),
+  ('Tour'),
+  ('Training'),
+  ('Trek'),
+  ('Workshop')
+on conflict (name) do nothing;
 
 create table public.user_interests (
   user_id     uuid not null references public.profiles (id) on delete cascade,
   interest_id smallint not null references public.interests (id) on delete cascade,
   primary key (user_id, interest_id)
 );
+
+-- Optional "clubs & groups" dropdown (Sun Devil Central "Event Tags").
+create table public.event_tags (
+  id            smallint generated always as identity primary key,
+  name          text not null unique,
+  -- false = tag is still stored so events can be matched, but it isn't shown
+  -- in the onboarding dropdown (campus and in-person/online tags are already
+  -- covered by the preferred-campus and event-format questions).
+  is_selectable boolean not null default true
+);
+
+-- Which tags each student chose (optional).
+create table public.user_event_tags (
+  user_id uuid     not null references public.profiles (id) on delete cascade,
+  tag_id  smallint not null references public.event_tags (id) on delete cascade,
+  primary key (user_id, tag_id)
+);
+
+insert into public.event_tags (name, is_selectable) values
+  ('Accessibility Coalition', true),
+  ('Alliance of Indigenous Peoples', true),
+  ('Asian/Asian Pacific American Students'' Coalition', true),
+  ('ASU Welcome Event', true),
+  ('Barrett Student Organization', true),
+  ('Black African Coalition', true),
+  ('California Events', true),
+  ('Career and Professional Development', true),
+  ('Change the World', true),
+  ('Changemaker Central', true),
+  ('Civic Engagement', true),
+  ('Club Meetings', true),
+  ('Clubs and Organization Workshops', true),
+  ('Coalition of International Students', true),
+  ('Community Service', true),
+  ('Downtown Phoenix Campus', false),
+  ('El Concilio', true),
+  ('Entrepreneurship & Innovation', true),
+  ('Family Weekend', true),
+  ('Graduate', true),
+  ('Homecoming', true),
+  ('Housing - Global Citizenship', true),
+  ('Housing - Academic Success & Career Preparedness', true),
+  ('Housing - Affinity', true),
+  ('Housing - Connectedness', true),
+  ('Housing - RCC', true),
+  ('Housing - Wellness', true),
+  ('Hybrid Event', false),
+  ('In-Person Event', false),
+  ('Inferno Affinity Alliance', true),
+  ('International', true),
+  ('IRE Officially Recognized Student Event', true),
+  ('Mary Lou Fulton College Events', true),
+  ('Multicultural Communities of Excellence', true),
+  ('Online Event', false),
+  ('PAB Event', true),
+  ('Polytechnic Campus', false),
+  ('Rainbow Coalition', true),
+  ('Salute to Service', true),
+  ('Student Organization Event', true),
+  ('Sun Devil Athletics', true),
+  ('Sun Devil Cinema', true),
+  ('Sun Devil Fitness/Wellness', true),
+  ('Sun Devil Sport Club', true),
+  ('Sun Devils UNITE', true),
+  ('Sustainability', true),
+  ('Tempe Campus', false),
+  ('Thunderbird Events', true),
+  ('Training', true),
+  ('Undergraduate', true),
+  ('University Signature Event', true),
+  ('W.P. Carey Event', true),
+  ('West Valley Campus', false),
+  ('Women''s Coalition', true)
+on conflict (name) do nothing;
 
 -- Events onboarding answers.
 create table public.event_preferences (
@@ -267,6 +372,15 @@ create table public.campus_event_interests (
 
 create index campus_event_interests_interest on public.campus_event_interests (interest_id);
 
+-- Which tags each imported campus event has (filled in by the backend).
+create table public.campus_event_tags (
+  event_id uuid     not null references public.campus_events (id) on delete cascade,
+  tag_id   smallint not null references public.event_tags (id) on delete cascade,
+  primary key (event_id, tag_id)
+);
+
+create index campus_event_tags_tag on public.campus_event_tags (tag_id);
+
 -- ---------------------------------------------------------------------------
 -- ROW LEVEL SECURITY
 -- The mobile app talks to Supabase with the publishable key, so every table
@@ -286,6 +400,9 @@ alter table public.event_preferences      enable row level security;
 alter table public.event_sources          enable row level security;  -- backend only, no policies
 alter table public.campus_events          enable row level security;
 alter table public.campus_event_interests enable row level security;
+alter table public.event_tags             enable row level security;
+alter table public.user_event_tags        enable row level security;
+alter table public.campus_event_tags      enable row level security;
 
 -- profiles: read/update own (rows are created by the sign-up trigger)
 create policy "Read own profile" on public.profiles
@@ -319,6 +436,10 @@ create policy "Own interests" on public.user_interests
   for all to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
+create policy "Own event tags" on public.user_event_tags
+  for all to authenticated
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
 create policy "Own event preferences" on public.event_preferences
   for all to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
@@ -329,4 +450,8 @@ create policy "Anyone can read interests" on public.interests
 create policy "Signed-in users can read campus events" on public.campus_events
   for select to authenticated using (true);
 create policy "Signed-in users can read event interests" on public.campus_event_interests
+  for select to authenticated using (true);
+create policy "Anyone can read event tags" on public.event_tags
+  for select to anon, authenticated using (true);
+create policy "Signed-in users can read campus event tags" on public.campus_event_tags
   for select to authenticated using (true);
